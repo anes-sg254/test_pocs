@@ -50,8 +50,7 @@ jobs:
 
       # Étape 4: Exécuter les tests avec pytest
       - name: Run tests
-        run: |
-          pytest --maxfail=1 --disable-warnings -q  # Exécute les tests, arrête après 1 échec, désactive les avertissements
+        run: pytest
 
       # Étape 5: Génére un rapport de test
       - name: Generate test report
