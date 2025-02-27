@@ -60,7 +60,7 @@ jobs:
 
       # Étape 6: Sauvegarde le rapport de test comme un artefact
       - name: Upload test report
-        uses: actions/upload-artifact@v3  # Utilise la version 3 de cette action
+        uses: actions/upload-artifact@v4  # Utilise la version 4 de cette action
         with:
           name: test-report
           path: report.html  # Envoie le fichier de rapport HTML généré comme artefact
