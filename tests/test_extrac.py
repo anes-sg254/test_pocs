@@ -15,10 +15,8 @@ def driver():
 def test_action_nouveautes(driver):
     """ Teste la récupération des produits dans la catégorie Nouveautés """
     
-    # Accéder à la page des nouveautés
     driver.get("https://www.action.com/fr-fr/nouveautes/")
     
-    # Attendre que le bouton des cookies soit visible, et si c'est le cas, cliquer dessus
     try:
         cookie_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.ID, "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"))
@@ -28,14 +26,12 @@ def test_action_nouveautes(driver):
     except Exception as e:
         print(f"Pas de bouton de cookies trouvé ou déjà accepté. {e}")
 
-    # Attendre que les produits soient chargés sur la page
     try:
         products = WebDriverWait(driver, 10).until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a[data-testid='product-card-link']"))
         )
         assert len(products) > 0, "Aucun produit trouvé dans la section Nouveautés"
         
-        # Vérification des détails du premier produit
         product = products[0]  # Prendre le premier produit
         title = product.find_element(By.CSS_SELECTOR, "[data-testid='product-card-title']").text
         url = product.get_attribute("href")
