@@ -4,27 +4,30 @@ on:
   push:
     branches:
       - main
-
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
-        name: Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Python 3.11.9
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11.9
+          python-version: "3.11"
 
       - name: Install dependencies
-        shell: bash
         run: |
-          set -e  # Exit immediately if a command exits with a non-zero status.
-          pip install --upgrade pip  # Upgrade pip
-          pip install selenium  # Install Selenium
-          pip install -r requirements.txt  # Install dependencies from requirements.txt
+          python -m pip install --upgrade pip
+          pip install pytest selenium webdriver-manager
 
-      - name: Execute pytest
+      - name: Install Chrome and ChromeDriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+          CHROME_VERSION=$(google-chrome --version | awk '{print $3}')
+          sudo apt-get install -y chromedriver
+          chromedriver --version
+
+      - name: Run tests
         run: pytest tests/
