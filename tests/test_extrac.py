@@ -1,27 +1,15 @@
 import pytest
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 import time
 
 @pytest.fixture
 def driver():
-    """ Initialise le navigateur en mode headless et ferme après les tests """
-    options = Options()
-    
-    # Pour l'exécution dans un environnement CI (headless)
-    options.add_argument("--headless")  # Mode headless, sans interface graphique
-    options.add_argument("--no-sandbox")  # Résoudre les problèmes dans les environnements CI
-    options.add_argument("--disable-dev-shm-usage")  # Pour les environnements limités en mémoire
-    options.add_argument("--disable-gpu")  # Désactive le GPU (recommandé dans CI headless)
-    
-    # Crée un service pour le ChromeDriver
-    service = Service(ChromeDriverManager().install())
-    
-    # Initialise le navigateur avec les options et le service
-    driver = webdriver.Chrome(service=service, options=options)
+    """ Initialise le navigateur et ferme après les tests """
+    # Si tu veux toujours exécuter en mode headless en local, garde ce code :
+    options = webdriver.ChromeOptions()
+    # options.add_argument("--headless")  # décommenter si tu veux en mode headless
+    driver = webdriver.Chrome(options=options)
     yield driver
     driver.quit()
 
@@ -29,7 +17,9 @@ def test_action_nouveautes(driver):
     """ Teste la récupération des produits dans la catégorie Nouveautés """
     
     driver.get("https://www.action.com/fr-fr/nouveautes/")
-    time.sleep(3)
+
+    # On attend ici un peu plus longtemps (pour être sûr que tout est chargé)
+    time.sleep(5)  # Un délai de 5 secondes pour que les éléments se chargent correctement
 
     try:
         cookie_button = driver.find_element(By.ID, "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")
@@ -38,8 +28,10 @@ def test_action_nouveautes(driver):
     except:
         print("Pas de bouton de cookies trouvé ou déjà accepté.")
 
-    time.sleep(3)
+    # Attendre encore un peu pour que les produits apparaissent après le clic sur le cookie
+    time.sleep(5)
 
+    # On s'assure que les produits sont présents
     products = driver.find_elements(By.CSS_SELECTOR, "a[data-testid='product-card-link']")
     assert len(products) > 0, "Aucun produit trouvé dans la section Nouveautés"
 
