@@ -2,13 +2,20 @@ import pytest
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
+import os
+import tempfile
 
 @pytest.fixture
 def driver():
     """ Initialise le navigateur et ferme après les tests """
-    # Si tu veux toujours exécuter en mode headless en local, garde ce code :
     options = webdriver.ChromeOptions()
-    # options.add_argument("--headless")  # décommenter si tu veux en mode headless
+
+    # Créer un répertoire temporaire pour éviter les conflits de répertoires de données utilisateurs
+    temp_user_data_dir = tempfile.mkdtemp()
+
+    # Si tu as besoin d'un user-data-dir spécifique, ajoute cette option :
+    options.add_argument(f"--user-data-dir={temp_user_data_dir}")
+
     driver = webdriver.Chrome(options=options)
     yield driver
     driver.quit()
