@@ -1,0 +1,66 @@
+name: Run Tests with Selenium
+
+on:
+  push:
+    branches:
+      - main  
+  pull_request:
+    branches:
+      - main  
+
+jobs:
+  test:
+    runs-on: ubuntu-latest  
+
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, 3.10, 3.11]  
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}  
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip  # Met à jour pip
+          pip install -r requirements.txt  # Installe toutes les dépendances depuis requirements.txt
+
+      - name: Install Google Chrome
+        run: |
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo dpkg -i google-chrome-stable_current_amd64.deb
+          sudo apt --fix-broken install  # Résout les dépendances si nécessaire
+
+      - name: Install ChromeDriver
+        run: |
+          LATEST=$(wget -qO- https://chromedriver.storage.googleapis.com/LATEST_RELEASE)
+          wget https://chromedriver.storage.googleapis.com/${LATEST}/chromedriver_linux64.zip
+          unzip chromedriver_linux64.zip
+          sudo mv chromedriver /usr/local/bin/
+          sudo chmod +x /usr/local/bin/chromedriver
+
+      - name: Run tests
+        run: |
+          pytest --maxfail=1 --disable-warnings -q  # Exécute les tests, arrête après 1 échec, désactive les avertissements
+
+      - name: Generate test report
+        run: |
+          pytest --maxfail=1 --disable-warnings --html=report.html  # Génère un rapport HTML
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-report
+          path: report.html  
+          
+      - name: Send notification to Discord
+        if: success() || failure()  # S'exécute même en cas de succès ou d'échec
+        run: |
+          curl -X POST -H 'Content-Type: application/json' \
+          -d '{"content": "Les tests ont été exécutés !", "username": "GitHub Actions"}' \
+          YOUR_DISCORD_WEBHOOK_URL  # Remplace par ton URL de webhook Discord
+
