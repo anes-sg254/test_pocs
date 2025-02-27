@@ -1,13 +1,28 @@
 import pytest
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 import time
 
 @pytest.fixture
 def driver():
-    """ Initialise le navigateur et ferme après le test """
-    driver = webdriver.Chrome()
-    driver.implicitly_wait(10)  
+    """ Initialise le navigateur en mode headless et ferme après les tests """
+    options = Options()
+    
+    # Pour l'exécution dans un environnement CI (headless)
+    options.add_argument("--headless")  # Mode headless, sans interface graphique
+    options.add_argument("--no-sandbox")  # Résoudre les problèmes dans les environnements CI
+    options.add_argument("--disable-dev-shm-usage")  # Pour les environnements limités en mémoire
+    options.add_argument("--disable-gpu")  # Désactive le GPU (recommandé dans CI headless)
+
+    # Crée un service pour le ChromeDriver avec webdriver_manager
+    service = Service(ChromeDriverManager().install())
+    
+    # Initialise le navigateur avec les options et le service
+    driver = webdriver.Chrome(service=service, options=options)
+    driver.implicitly_wait(10)  # Temps d'attente implicite
     yield driver
     driver.quit()
 
