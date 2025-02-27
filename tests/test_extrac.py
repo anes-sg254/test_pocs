@@ -1,14 +1,23 @@
 import pytest
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 import time
 
 @pytest.fixture
 def driver():
-    """ Initialise le navigateur et ferme après les tests """
-    driver = webdriver.Chrome()
+    """ Initialise le navigateur en mode headless et ferme après les tests """
+    options = Options()
+    options.add_argument("--headless")  # Mode headless obligatoire pour GitHub Actions
+    options.add_argument("--no-sandbox")  # Évite les erreurs liées aux permissions
+    options.add_argument("--disable-dev-shm-usage")  # Évite les erreurs de mémoire partagée
+    options.add_argument("--disable-gpu")  # Désactiver GPU pour éviter certains bugs graphiques
+
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
+    driver.implicitly_wait(10)  # Ajout d'une attente implicite
     yield driver
     driver.quit()
 
