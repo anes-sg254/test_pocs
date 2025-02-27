@@ -26,6 +26,7 @@ jobs:
         run: |
           pip install --upgrade pip  # Met à jour pip
           pip install selenium  # Installe Selenium
+          pip install webdriver_manager
           pip install -r requirements.txt  # Installe les autres dépendances spécifiées
 
       # Étape 4: Exécuter les tests avec pytest (vérifie que le dossier 'tests' contient bien les tests)
