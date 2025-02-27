@@ -1,66 +1,57 @@
 import pytest
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
-import tempfile
-import random
-import string
 
 @pytest.fixture
 def driver():
-    """ Initialize the browser and close it after tests """
-    options = webdriver.ChromeOptions()
-
-    # Create a unique temporary user data directory to avoid conflicts
-    random_suffix = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
-    temp_user_data_dir = tempfile.mkdtemp(prefix=f"user_data_{random_suffix}_")
-
-    # Add the user data directory option to Chrome options
-    options.add_argument(f"--user-data-dir={temp_user_data_dir}")
-
-    # Initialize the Chrome WebDriver with the specified options
-    driver = webdriver.Chrome(options=options)
-
-    # Yield the driver to be used in the test functions
+    """ Initialise le navigateur et ferme après les tests """
+    driver = webdriver.Chrome()
     yield driver
-    
-    # Quit the driver after the test finishes
     driver.quit()
 
 def test_action_nouveautes(driver):
     """ Teste la récupération des produits dans la catégorie Nouveautés """
     
+    # Accéder à la page des nouveautés
     driver.get("https://www.action.com/fr-fr/nouveautes/")
-
-    # Wait a little longer to ensure everything is fully loaded
-    time.sleep(5)  # A delay of 5 seconds for elements to load properly
-
+    
+    # Attendre que le bouton des cookies soit visible, et si c'est le cas, cliquer dessus
     try:
-        cookie_button = driver.find_element(By.ID, "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")
+        cookie_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.ID, "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"))
+        )
         cookie_button.click()
-        time.sleep(2)
-    except:
-        print("Pas de bouton de cookies trouvé ou déjà accepté.")
+        print("Cookies acceptés.")
+    except Exception as e:
+        print(f"Pas de bouton de cookies trouvé ou déjà accepté. {e}")
 
-    # Wait again for the products to appear after clicking on the cookie button
-    time.sleep(5)
+    # Attendre que les produits soient chargés sur la page
+    try:
+        products = WebDriverWait(driver, 10).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a[data-testid='product-card-link']"))
+        )
+        assert len(products) > 0, "Aucun produit trouvé dans la section Nouveautés"
+        
+        # Vérification des détails du premier produit
+        product = products[0]  # Prendre le premier produit
+        title = product.find_element(By.CSS_SELECTOR, "[data-testid='product-card-title']").text
+        url = product.get_attribute("href")
+        price_whole = product.find_element(By.CSS_SELECTOR, "[data-testid='product-card-price-whole']").text
+        price_fraction = product.find_element(By.CSS_SELECTOR, "[data-testid='product-card-price-fractional']").text
+        description = product.find_element(By.CSS_SELECTOR, "[data-testid='product-card-description']").text
+        price = f"{price_whole},{price_fraction}€"
 
-    # Ensure that products are present
-    products = driver.find_elements(By.CSS_SELECTOR, "a[data-testid='product-card-link']")
-    assert len(products) > 0, "Aucun produit trouvé dans la section Nouveautés"
+        assert title, "Le titre du produit est vide"
+        assert url.startswith("https"), "L'URL du produit n'est pas valide"
+        assert price_whole.isdigit(), "Le prix du produit est invalide"
+        assert description, "La description du produit est vide"
 
-    product = products[0]  # Take the first product
-    title = product.find_element(By.CSS_SELECTOR, "[data-testid='product-card-title']").text
-    url = product.get_attribute("href")
-    price_whole = product.find_element(By.CSS_SELECTOR, "[data-testid='product-card-price-whole']").text
-    price_fraction = product.find_element(By.CSS_SELECTOR, "[data-testid='product-card-price-fractional']").text
-    description = product.find_element(By.CSS_SELECTOR, "[data-testid='product-card-description']").text
-    price = f"{price_whole},{price_fraction}€"
+        print(f"Test réussi pour le produit : {title} - {price}€")
+        
+    except Exception as e:
+        print(f"Erreur lors de la récupération des produits : {e}")
+        assert False, f"Test échoué : {e}"
 
-    # Assertions to verify the product details
-    assert title, "Le titre du produit est vide"
-    assert url.startswith("https"), "L'URL du produit n'est pas valide"
-    assert price_whole.isdigit(), "Le prix du produit est invalide"
-    assert description, "La description du produit est vide"
-
-    print(f"Test réussi pour le produit : {title} - {price}€")
