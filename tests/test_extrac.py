@@ -3,6 +3,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
 import tempfile
+import random
+import string
 
 @pytest.fixture
 def driver():
@@ -10,7 +12,8 @@ def driver():
     options = webdriver.ChromeOptions()
 
     # Create a unique temporary user data directory to avoid conflicts
-    temp_user_data_dir = tempfile.mkdtemp()
+    random_suffix = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+    temp_user_data_dir = tempfile.mkdtemp(prefix=f"user_data_{random_suffix}_")
 
     # Add the user data directory option to Chrome options
     options.add_argument(f"--user-data-dir={temp_user_data_dir}")
