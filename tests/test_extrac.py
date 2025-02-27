@@ -2,22 +2,26 @@ import pytest
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
-import os
 import tempfile
 
 @pytest.fixture
 def driver():
-    """ Initialise le navigateur et ferme après les tests """
+    """ Initialize the browser and close it after tests """
     options = webdriver.ChromeOptions()
 
-    # Créer un répertoire temporaire pour éviter les conflits de répertoires de données utilisateurs
+    # Create a unique temporary user data directory to avoid conflicts
     temp_user_data_dir = tempfile.mkdtemp()
 
-    # Si tu as besoin d'un user-data-dir spécifique, ajoute cette option :
+    # Add the user data directory option to Chrome options
     options.add_argument(f"--user-data-dir={temp_user_data_dir}")
 
+    # Initialize the Chrome WebDriver with the specified options
     driver = webdriver.Chrome(options=options)
+
+    # Yield the driver to be used in the test functions
     yield driver
+    
+    # Quit the driver after the test finishes
     driver.quit()
 
 def test_action_nouveautes(driver):
@@ -25,8 +29,8 @@ def test_action_nouveautes(driver):
     
     driver.get("https://www.action.com/fr-fr/nouveautes/")
 
-    # On attend ici un peu plus longtemps (pour être sûr que tout est chargé)
-    time.sleep(5)  # Un délai de 5 secondes pour que les éléments se chargent correctement
+    # Wait a little longer to ensure everything is fully loaded
+    time.sleep(5)  # A delay of 5 seconds for elements to load properly
 
     try:
         cookie_button = driver.find_element(By.ID, "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")
@@ -35,14 +39,14 @@ def test_action_nouveautes(driver):
     except:
         print("Pas de bouton de cookies trouvé ou déjà accepté.")
 
-    # Attendre encore un peu pour que les produits apparaissent après le clic sur le cookie
+    # Wait again for the products to appear after clicking on the cookie button
     time.sleep(5)
 
-    # On s'assure que les produits sont présents
+    # Ensure that products are present
     products = driver.find_elements(By.CSS_SELECTOR, "a[data-testid='product-card-link']")
     assert len(products) > 0, "Aucun produit trouvé dans la section Nouveautés"
 
-    product = products[0]  # Prendre le premier produit
+    product = products[0]  # Take the first product
     title = product.find_element(By.CSS_SELECTOR, "[data-testid='product-card-title']").text
     url = product.get_attribute("href")
     price_whole = product.find_element(By.CSS_SELECTOR, "[data-testid='product-card-price-whole']").text
@@ -50,6 +54,7 @@ def test_action_nouveautes(driver):
     description = product.find_element(By.CSS_SELECTOR, "[data-testid='product-card-description']").text
     price = f"{price_whole},{price_fraction}€"
 
+    # Assertions to verify the product details
     assert title, "Le titre du produit est vide"
     assert url.startswith("https"), "L'URL du produit n'est pas valide"
     assert price_whole.isdigit(), "Le prix du produit est invalide"
