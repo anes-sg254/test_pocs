@@ -3,32 +3,37 @@ name: Run Tests with Selenium
 on:
   push:
     branches:
-      - main  
+      - main  # Exécute le workflow sur des changements dans la branche main
   pull_request:
     branches:
-      - main  
+      - main  # Exécute le workflow sur des PR ouvertes vers la branche main
 
 jobs:
   test:
-    runs-on: ubuntu-latest  
+    runs-on: ubuntu-latest  # Utilise une machine virtuelle Ubuntu
 
     strategy:
       matrix:
-        python-version: [3.8, 3.9, 3.10, 3.11]  
+        python-version: [3.8, 3.9, 3.10, 3.11]  # Teste les versions Python 3.8, 3.9, 3.10, 3.11
+        # Ajoutez d'autres versions si nécessaire
 
     steps:
+      # Étape 1: Vérifie le code source du repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      # Étape 2: Installe les dépendances nécessaires
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}  
+          python-version: ${{ matrix.python-version }}  # Utilise la version de Python spécifiée dans la matrice
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip  # Met à jour pip
           pip install -r requirements.txt  # Installe toutes les dépendances depuis requirements.txt
 
+      # Étape 3: Installe Google Chrome et ChromeDriver
       - name: Install Google Chrome
         run: |
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
@@ -43,24 +48,27 @@ jobs:
           sudo mv chromedriver /usr/local/bin/
           sudo chmod +x /usr/local/bin/chromedriver
 
+      # Étape 4: Exécuter les tests avec pytest
       - name: Run tests
         run: |
           pytest --maxfail=1 --disable-warnings -q  # Exécute les tests, arrête après 1 échec, désactive les avertissements
 
+      # Étape 5: Génére un rapport de test
       - name: Generate test report
         run: |
           pytest --maxfail=1 --disable-warnings --html=report.html  # Génère un rapport HTML
 
+      # Étape 6: Sauvegarde le rapport de test comme un artefact
       - name: Upload test report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3  # Utilise la version 3 de cette action
         with:
           name: test-report
-          path: report.html  
+          path: report.html  # Envoie le fichier de rapport HTML généré comme artefact
           
+      # Étape 7: Notifier Discord (optionnel, si tu veux envoyer une notification Discord)
       - name: Send notification to Discord
         if: success() || failure()  # S'exécute même en cas de succès ou d'échec
         run: |
           curl -X POST -H 'Content-Type: application/json' \
           -d '{"content": "Les tests ont été exécutés !", "username": "GitHub Actions"}' \
           YOUR_DISCORD_WEBHOOK_URL  # Remplace par ton URL de webhook Discord
-
