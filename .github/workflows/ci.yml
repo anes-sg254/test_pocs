@@ -1,67 +1,32 @@
-name: Run Tests with Selenium
+name: Build and execute Python Script
 
 on:
   push:
     branches:
       - main  # Exécute le workflow sur des changements dans la branche main
-  pull_request:
-    branches:
-      - main  # Exécute le workflow sur des PR ouvertes vers la branche main
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest  # Utilise une machine virtuelle Ubuntu
 
-    strategy:
-      matrix:
-        python-version: [3.8, 3.9]  # Teste les versions Python 3.8, 3.9, 3.10, 3.11
-        # Ajoutez d'autres versions si nécessaire
-
     steps:
-      # Étape 1: Vérifie le code source du repository
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      # Étape 1: Checkout du code source du repository
+      - uses: actions/checkout@v4
+        name: Checkout code
 
-      # Étape 2: Installe les dépendances nécessaires
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+      # Étape 2: Installer Python 3.10.12
+      - name: Set up Python 3.10.12
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}  # Utilise la version de Python spécifiée dans la matrice
+          python-version: 3.10.12  # Utilise la version de Python 3.10.12
 
+      # Étape 3: Installer les dépendances nécessaires depuis requirements.txt
       - name: Install dependencies
+        shell: bash
         run: |
-          python -m pip install --upgrade pip  # Met à jour pip
-          pip install -r requirements.txt  # Installe toutes les dépendances depuis requirements.txt
-
-      # Étape 3: Installe Google Chrome et ChromeDriver
-      - name: Install Google Chrome
-        run: |
-          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo dpkg -i google-chrome-stable_current_amd64.deb
-          sudo apt --fix-broken install  # Résout les dépendances si nécessaire
-
-      - name: Install ChromeDriver
-        run: |
-          LATEST=$(wget -qO- https://chromedriver.storage.googleapis.com/LATEST_RELEASE)
-          wget https://chromedriver.storage.googleapis.com/${LATEST}/chromedriver_linux64.zip
-          unzip chromedriver_linux64.zip
-          sudo mv chromedriver /usr/local/bin/
-          sudo chmod +x /usr/local/bin/chromedriver
+          pip install --upgrade pip  # Met à jour pip
+          pip install fastapi locust uvicorn pytest httpx  # Installe les dépendances spécifiées
 
       # Étape 4: Exécuter les tests avec pytest
-      - name: Run tests
-        run: pytest
-
-      # Étape 5: Génére un rapport de test
-      - name: Generate test report
-        run: |
-          pytest --maxfail=1 --disable-warnings --html=report.html  # Génère un rapport HTML
-
-      # Étape 6: Sauvegarde le rapport de test comme un artefact
-      - name: Upload test report
-        uses: actions/upload-artifact@v4  # Utilise la version 4 de cette action
-        with:
-          name: test-report
-          path: report.html  # Envoie le fichier de rapport HTML généré comme artefact
-          
-      
+      - name: Execute pytest
+        run: pytest  # Exécute pytest pour tester ton code
