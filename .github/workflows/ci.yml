@@ -64,10 +64,4 @@ jobs:
           name: test-report
           path: report.html  # Envoie le fichier de rapport HTML généré comme artefact
           
-      # Étape 7: Notifier Discord (optionnel, si tu veux envoyer une notification Discord)
-      - name: Send notification to Discord
-        if: success() || failure()  # S'exécute même en cas de succès ou d'échec
-        run: |
-          curl -X POST -H 'Content-Type: application/json' \
-          -d '{"content": "Les tests ont été exécutés !", "username": "GitHub Actions"}' \
-          YOUR_DISCORD_WEBHOOK_URL  # Remplace par ton URL de webhook Discord
+      
